@@ -82,7 +82,7 @@ async function startServer() {
       res.json(data);
     });
 
-     app.post("/load", upload.none(), async (req, res) => {
+    app.post("/load", upload.none(), async (req, res) => {
       const { userEmail, userName, _id, noti } = req.body;
 
       if (!_id || !ObjectId.isValid(_id)) {
