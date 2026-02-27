@@ -1,27 +1,28 @@
-require("dotenv").config();
 const express = require("express");
 const { MongoClient, ObjectId } = require("mongodb");
 const multer = require("multer");
 const cors = require("cors");
-// import { configDotenv } from "dotenv";
-const app = express();
+const { configDotenv } = require("dotenv");
+ const app = express();
 app.use(cors()); 
 app.use(express.json()); 
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
-console.log("ENV VALUE:", process.env.MONGODB_URI);
- const client = new MongoClient(process.env.MONGODB_URI);
-
-async function startServer() {
+configDotenv()
+console.log("ENV VALUE:", process.env.MONGO_URI); 
+let client;  
+let db;
+  
+async function startServer() { 
   try {
+     client = new MongoClient(process.env.MONGO_URI);   
     await client.connect();
-    console.log("MongoDB connected");
-
-    const db = client.db("complaint");
+    db = client.db("complaint"); 
+    console.log("✅ MongoDB connected");
     const User = db.collection("user");
-    const Us = db.collection("Us");
+    const Us = db.collection("Us"); 
     const Ad = db.collection("admin");
-    const msg  = db.collection("msg");
+    const msg  = db.collection("msg"); 
      app.post("/upload", upload.single("image"), async (req, res) => {
       try {
         const file = req.file;
@@ -36,7 +37,7 @@ async function startServer() {
             if (file) {
               updateData.image = file.buffer.toString("base64");
             }
-
+ 
             await User.updateOne({ _id: new ObjectId(_id) }, { $set: updateData });
             return res.json({ success: true, updated: true });
           }
@@ -48,18 +49,17 @@ async function startServer() {
 
         await User.insertOne({ userEmail, userName, name, branch,  complaint,  des,  location,   img,  mobile, status: "Pending",  image: file.buffer.toString("base64"),  noti: [],  uploadedAt: new Date(),});
 
-        res.json({ success: true, inserted: true });
+        res.json({ok: true, inserted: true });
       } catch (err) {
         console.error("UPLOAD ERROR:", err);
-        res.status(500).json({ error: "Server error" });
+        res.json({ok:false});
       }
     }); 
 
      app.get("/users", async (req, res) => {
       const { email } = req.query;
       if (!email) return res.status(400).json({ error: "Email required" });
-
-      const users = await User.find({ userEmail: email }).toArray();
+      const users = await User.find({ userEmail: email }).project({ userEmail: 1, userName: 1, name: 1, branch: 1,complaint: 1,des: 1, location: 1,img: 1,mobile: 1,status: 1, uploadedAt: 1}).toArray();
       res.json(users);
     });
 
@@ -82,7 +82,7 @@ async function startServer() {
       res.json(data);
     });
 
-    app.post("/load", upload.none(), async (req, res) => {
+     app.post("/load", upload.none(), async (req, res) => {
       const { userEmail, userName, _id, noti } = req.body;
 
       if (!_id || !ObjectId.isValid(_id)) {
@@ -121,27 +121,32 @@ async function startServer() {
 app.post("/chstatus",async(req,res)=>{
   console.log("fuck...",req.body)
   let data = await User.findOne({userEmail:req.body.email,des:req.body.des,mobile:req.body.mob})
-  if(data){
+  if(data){ 
     await User.updateOne({_id:data._id},{$set:{status:req.body.status}});
     await msg.insertOne({name:req.body.name,email:req.body.email,mobile:req.body.mob,complaint:req.body.complaint,des:req.body.des,status:req.body.status === "In Progress"? `👋 Your complaint is now In Progress. Our admin is reviewing it.`: `🥳 Your complaint has been ${req.body.status}.`,complaintId:data._id,uploaded:req.body.date})
     return res.send({ok:true})
   }
-      return res.send({ok:fasle});
+      return res.send({ok:false});
+})
+app.get("/get_data",async(req,res)=>{
+try{
+  let data = await User.find({userEmail:req.query.email}).project({image:1}).toArray();
+  return res.send(data)
+}catch{
+  return({sucess:false})
+}
 })
 app.post("/msg",async(req,res)=>{
   try{
 let data = await msg.find({email:req.body.email}).toArray();
  return res.send(data)
-  }catch(err){
-res.status(500).json([]);
-  }
-})
+  }catch(err){ 
+res.status(500).json({ok: false,data: []});}})
      app.listen(5000, () =>
-      console.log("Server running on http://localhost:5000")
+      console.log(`Server running on ${process.env.NEXT_PUBLIC_BACKEND}`)
     );
    } catch (err) {
     console.error("SERVER START ERROR:", err);
   }
 }
-
-startServer(); 
+startServer();  
