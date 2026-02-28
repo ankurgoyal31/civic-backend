@@ -5,17 +5,16 @@ const cors = require("cors");
 const { configDotenv } = require("dotenv");
  const app = express();
 app.use(cors()); 
-app.use(express.json());  
+app.use(express.json()); 
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 configDotenv()
 console.log("ENV VALUE:", process.env.MONGO_URI); 
 let client;   
 let db;
-  
 async function startServer() { 
   try {
-     const client = new MongoClient(process.env.MONGODB_URI);
+     client = new MongoClient(process.env.MONGODB_URI);   
     await client.connect();
     db = client.db("complaint"); 
     console.log("✅ MongoDB connected");
@@ -28,20 +27,20 @@ async function startServer() {
         const file = req.file;
         const { _id,  userEmail,  userName,name, branch, complaint,  des,  location,  img, mobile,} = req.body;
 
-         if (_id && ObjectId.isValid(_id)) {
-          const existing = await User.findOne({ _id: new ObjectId(_id),  userEmail,  userName, });
+        //  if (_id && ObjectId.isValid(_id)) {
+          // const existing = await User.findOne({ _id: new ObjectId(_id),  userEmail,  userName, });
 
-          if (existing) {
-            const updateData = {  name,  branch,  complaint,  des,  location,  mobile,};
+        //   if (existing) {
+        //     const updateData = {  name,  branch,  complaint,  des,  location,  mobile,};
 
-            if (file) {
-              updateData.image = file.buffer.toString("base64");
-            }
+        //     if (file) {
+        //       updateData.image = file.buffer.toString("base64");
+        //     }
  
-            await User.updateOne({ _id: new ObjectId(_id) }, { $set: updateData });
-            return res.json({ success: true, updated: true });
-          }
-        }
+        //     await User.updateOne({ _id: new ObjectId(_id) }, { $set: updateData });
+        //     return res.json({ success: true, updated: true });
+        //   }
+        // }
 
          if (!file) {
           return res.status(400).json({ error: "Image required" });
@@ -56,6 +55,30 @@ async function startServer() {
       }
     }); 
 
+    app.post("/edit", upload.single("image"), async (req, res) => {
+  try {
+    const file = req.file;
+    const { _id, userEmail, userName, name, branch, complaint, des, location, mobile } = req.body;
+    if (!_id || !ObjectId.isValid(_id)) {
+      return res.json({ success: false });
+    }
+const existing = await User.findOne({_id: new ObjectId(_id)});
+console.log("Existing ->", existing);
+    if (!existing) {
+      return res.json({ success: false });
+    }
+
+    const updateData = {name, branch, complaint, des, location, mobile};
+    if (file) {
+      updateData.image = file.buffer.toString("base64");
+    }
+    await User.updateOne({ _id: new ObjectId(_id) }, { $set: updateData });
+    return res.json({ success: true, updated: true });
+  } catch (err) {
+    console.log("EDIT ERROR ->", err);
+    return res.status(500).json({ success: false });
+  }
+});
      app.get("/users", async (req, res) => {
       const { email } = req.query;
       if (!email) return res.status(400).json({ error: "Email required" });
