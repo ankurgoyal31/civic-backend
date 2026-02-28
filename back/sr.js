@@ -5,7 +5,7 @@ const cors = require("cors");
 const { configDotenv } = require("dotenv");
  const app = express();
 app.use(cors()); 
-app.use(express.json()); 
+app.use(express.json());  
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 configDotenv()
