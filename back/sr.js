@@ -1,4 +1,4 @@
-const express = require("express");
+ const express = require("express");
 const { MongoClient, ObjectId } = require("mongodb");
 const multer = require("multer");
 const cors = require("cors");
@@ -10,7 +10,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 configDotenv()
 console.log("ENV VALUE:", process.env.MONGO_URI); 
-let client;  
+let client;   
 let db;
   
 async function startServer() { 
@@ -59,7 +59,7 @@ async function startServer() {
      app.get("/users", async (req, res) => {
       const { email } = req.query;
       if (!email) return res.status(400).json({ error: "Email required" });
-      const users = await User.find({ userEmail: email }).project({ userEmail: 1, userName: 1, name: 1, branch: 1,complaint: 1,des: 1, location: 1,img: 1,mobile: 1,status: 1, uploadedAt: 1}).toArray();
+      const users = await User.find({ userEmail: email }).project({name:1,branch: 1,complaint: 1,des: 1, location: 1,img: 1,mobile: 1,status: 1, uploadedAt: 1}).toArray();
       res.json(users);
     });
 
@@ -136,6 +136,20 @@ try{
   return({sucess:false})
 }
 })
+app.get("/update", async (req, res) => {
+
+   try {
+     const id = req.query.edit;
+console.log("calls",id)
+const find = await User.findOne({_id: new ObjectId(id)},{projection:{name: 1, branch: 1, complaint: 1, des: 1, location: 1, mobile: 1}});
+   console.log("calls")
+    console.log("call update data",find)
+   return res.json({ success: true, data: find });
+
+  } catch (err) {
+   return res.status(500).json({ success: false });
+  }
+});
 app.post("/msg",async(req,res)=>{
   try{
 let data = await msg.find({email:req.body.email}).toArray();
