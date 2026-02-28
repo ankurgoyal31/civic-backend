@@ -26,22 +26,6 @@ async function startServer() {
       try {
         const file = req.file;
         const { _id,  userEmail,  userName,name, branch, complaint,  des,  location,  img, mobile,} = req.body;
-
-        //  if (_id && ObjectId.isValid(_id)) {
-          // const existing = await User.findOne({ _id: new ObjectId(_id),  userEmail,  userName, });
-
-        //   if (existing) {
-        //     const updateData = {  name,  branch,  complaint,  des,  location,  mobile,};
-
-        //     if (file) {
-        //       updateData.image = file.buffer.toString("base64");
-        //     }
- 
-        //     await User.updateOne({ _id: new ObjectId(_id) }, { $set: updateData });
-        //     return res.json({ success: true, updated: true });
-        //   }
-        // }
-
          if (!file) {
           return res.status(400).json({ error: "Image required" });
         }
@@ -179,6 +163,10 @@ let data = await msg.find({email:req.body.email}).toArray();
  return res.send(data)
   }catch(err){ 
 res.status(500).json({ok: false,data: []});}})
+   
+   app.get("/health", (req, res) => {
+  res.status(200).send("OK");
+});
      app.listen(5000, () =>
       console.log(`Server running on ${process.env.NEXT_PUBLIC_BACKEND}`)
     );
